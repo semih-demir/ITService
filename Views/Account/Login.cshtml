@@ -1,4 +1,6 @@
 ﻿@model ITService.Models.LoginViewModel
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
 
 <!DOCTYPE html>
 <html lang="en">
@@ -38,7 +40,7 @@
                         <div class="center">
                             <h1>
                                <!-- <img src="~/assets/images/it-service-logo.png" alt="ITService Logo" style="height: 60px;">  -->
-                                <span class="white" id="id-text2">ITService User Login </span>
+                                <span class="white" id="id-text2">@Localizer["WelcomeMessage"] ITService User Login </span>
                             </h1>
                          
                         </div>
@@ -55,6 +57,18 @@
                                         </h4>
 
                                         <div class="space-6"></div>
+                                        @if (!ViewData.ModelState.IsValid)
+                                        {
+                                            <div class="alert alert-danger">
+                                                <ul>
+                                                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                                    {
+                                                        <li>@error.ErrorMessage</li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+
 
                                         <form asp-action="Login" asp-controller="Account" method="post">
                                             <fieldset>

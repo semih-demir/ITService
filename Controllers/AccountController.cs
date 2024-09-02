@@ -1,6 +1,8 @@
 ﻿using ITService.Models;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using System.Security.Claims;
 
 namespace ITService.Controllers
 {
@@ -19,27 +21,28 @@ namespace ITService.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login(LoginViewModel model)
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
-                // Kullanıcıyı MSSQL'den doğrula
                 var user = _context.Users.FirstOrDefault(u => u.Username == model.Username);
-
-                if (user != null && VerifyPasswordHash(model.Password, user.PasswordHash))
+                if (user != null && model.Password == user.PasswordHash)
                 {
-                    bool isPasswordValid = (model.Password == user.PasswordHash);
-                    // Kullanıcıyı rolüne göre yönlendir
-                    if (user.RoleId == 1) // Admin rolü
-                    {
-                        return RedirectToAction("AdminDashboard", "Admin");
-                    }
-                    else
-                    {
-                        return RedirectToAction("Index", "Home");
-                    }
+                    var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.Role, "Admin") // Kullanıcı rolünü buraya ekleyin
+                };
+
+                    var claimsIdentity = new ClaimsIdentity(claims, "CookieAuth");
+                    var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+                    await HttpContext.SignInAsync("CookieAuth", claimsPrincipal);
+
+                    return RedirectToAction("AdminDashboard", "Admin");
                 }
-                ModelState.AddModelError(string.Empty, "Geçersiz kullanıcı adı veya şifre.");
+                ModelState.AddModelError("", "Invalid login attempt.");
             }
             return View(model);
         }

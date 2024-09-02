@@ -1,7 +1,29 @@
 using ITService.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Localization ve Globalization servislerini ekleyin
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+var supportedCultures = new[]
+{
+    new CultureInfo("en"),
+    new CultureInfo("tr")
+};
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.SetDefaultCulture(supportedCultures[0].Name)
+           .AddSupportedCultures(supportedCultures.Select(c => c.Name).ToArray())
+           .AddSupportedUICultures(supportedCultures.Select(c => c.Name).ToArray());
+});
+
+
+builder.Services.AddMvc()
+    .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
+    .AddDataAnnotationsLocalization();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -26,6 +48,8 @@ builder.Services.AddDbContext<ITServiceContext>(options =>
     options.UseSqlServer(connectionString));
 
 var app = builder.Build();
+
+app.UseRequestLocalization();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
